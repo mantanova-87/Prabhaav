@@ -84,8 +84,15 @@ export function useAuth() {
 
 export function useApi() {
   const { token } = useAuth();
-  const apiFetch = async (url: string, options: RequestInit = {}) => {
-    const res = await fetch(url, {
+  // When deployed to Vercel (or similar environment), the API sits on the same domain at /api
+  // Otherwise, default to the local dev server at localhost:3001
+  const API_URL = import.meta.env.VITE_VERCEL === 'true' 
+    ? '' 
+    : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
+  const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
+    const fetchUrl = `${API_URL}${endpoint}`;
+    const res = await fetch(fetchUrl, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
