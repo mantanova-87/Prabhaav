@@ -18,17 +18,24 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+import fs from 'fs';
+
+const isVercel = process.env.VITE_VERCEL === 'true' || process.env.VERCEL === '1';
+const uploadsDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+
+// Ensure uploads directory
+try {
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+} catch (err) {
+  console.warn("Could not create uploads directory:", err.message);
+}
+
 // ─── FILE UPLOAD CONFIG ───────────────────────────────────────
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
-
-// Ensure uploads directory
-import fs from 'fs';
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ─── IN-MEMORY DATABASE ───────────────────────────────────────
 
